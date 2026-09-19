@@ -10,10 +10,10 @@ import SwiftUI
 enum NotchMotion {
     /// Folding open and shut. Long enough to read as a movement, short enough
     /// that it never delays you.
-    static let unfold = Animation.spring(response: 0.42, dampingFraction: 0.78)
+    static let unfold = Animation.spring(response: 0.46, dampingFraction: 0.72)
 
     /// Contents arriving after the shape has started opening.
-    static let contents = Animation.spring(response: 0.36, dampingFraction: 0.82)
+    static let contents = Animation.spring(response: 0.34, dampingFraction: 0.8)
 
     /// The tooltip travelling between cells. Slower and more damped than the
     /// fold: it is a bigger object moving a longer way, and the same spring that

@@ -71,7 +71,7 @@ final class NotchPanel: NSPanel {
             defer: false
         )
         level = .statusBar
-        collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
+        collectionBehavior = Self.pinnedBehavior
         isOpaque = false
         backgroundColor = .clear
         hasShadow = false
@@ -80,6 +80,20 @@ final class NotchPanel: NSPanel {
         hidesOnDeactivate = false
         becomesKeyOnlyIfNeeded = true
         isReleasedWhenClosed = false
+    }
+
+    /// On every Space at once and never carried by a Space transition. The
+    /// notch stands in for a hole in the screen, and a hole does not slide
+    /// sideways when the desktop does.
+    static let pinnedBehavior: NSWindow.CollectionBehavior = [
+        .canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle
+    ]
+
+    /// Re-asserted on every order-front: AppKit has been seen to drop
+    /// `canJoinAllSpaces` from a panel between creation and display.
+    override func orderFrontRegardless() {
+        collectionBehavior = Self.pinnedBehavior
+        super.orderFrontRegardless()
     }
 
     override var canBecomeKey: Bool { false }

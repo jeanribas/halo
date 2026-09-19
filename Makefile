@@ -89,8 +89,8 @@ verify-deps:
 run: build
 	@APP=$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Debug -showBuildSettings 2>/dev/null \
-		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Codenotch.app; \
-	pkill -x Codenotch 2>/dev/null; sleep 0.5; \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Halo.app; \
+	pkill -x Halo 2>/dev/null; sleep 0.5; \
 	open "$$APP"
 
 # Build a Release .app, sign it with whatever identity is available (Developer
@@ -106,10 +106,10 @@ install: gen
 		-configuration Release $(DEV_SIGN) build
 	@APP=$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Release -showBuildSettings 2>/dev/null \
-		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Codenotch.app; \
-	pkill -x Codenotch || true; \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Halo.app; \
+	pkill -x Halo || true; \
 	cp -R "$$APP" /Applications/; \
-	open /Applications/Codenotch.app
+	open /Applications/Halo.app
 
 clean:
 	rm -rf build DerivedData $(PROJECT)
@@ -127,7 +127,7 @@ clean:
 # → App-Specific Passwords. Not your Apple ID password.
 
 RELEASE_DIR := build/release
-APP_NAME    := Codenotch
+APP_NAME    := Halo
 # The label of the stored notarytool credential in the login keychain, not
 # anything to do with the app's name — it was created before the rename and
 # renaming the variable is what broke `make release` after it. Recreating it
@@ -278,8 +278,8 @@ CI_ENTITLEMENTS := $(CURDIR)/$(CI_DIR)/adhoc.entitlements
 # and re-signs for distribution, which needs the Developer ID identity that is
 # the one thing a runner does not have.
 build-ci: gen
-	rm -rf $(CI_DIR)
-	mkdir -p $(CI_DIR)
+	rm -rf "$(CI_DIR)"
+	mkdir -p "$(CI_DIR)"
 	@# Same reason as `archive`: without this, every build leaves spare
 	@# "Codenotch" entries in Spotlight next to the installed app.
 	@touch build/.metadata_never_index
@@ -306,9 +306,9 @@ build-ci: gen
 		'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
 		'<plist version="1.0"><dict>' \
 		'<key>com.apple.security.cs.disable-library-validation</key><true/>' \
-		'</dict></plist>' > $(CI_ENTITLEMENTS)
+		'</dict></plist>' > "$(CI_ENTITLEMENTS)"
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
-		-configuration Release -derivedDataPath $(CI_DERIVED) \
+		-configuration Release -derivedDataPath "$(CI_DERIVED)" \
 		CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="" \
 		CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES \
 		CODE_SIGN_ENTITLEMENTS="$(CI_ENTITLEMENTS)" \
@@ -323,11 +323,11 @@ build-ci: gen
 	@#
 	@# The outer bundle only: the framework beside it keeps the signature it
 	@# was built with, and re-sealing the app recomputes its hashes anyway.
-	codesign --force --options runtime --entitlements $(CI_ENTITLEMENTS) \
-		--sign - $(CI_APP)
+	codesign --force --options runtime --entitlements "$(CI_ENTITLEMENTS)" \
+		--sign - "$(CI_APP)"
 	@# Proof rather than assumption, because this is invisible until someone
 	@# thinks to look: fail the build if the entitlement came back.
-	@codesign -d --entitlements - --xml $(CI_APP) 2>/dev/null \
+	@codesign -d --entitlements - --xml "$(CI_APP)" 2>/dev/null \
 		| grep -q 'get-task-allow' \
 		&& { echo "get-task-allow survived the re-sign"; exit 1; } || true
 
@@ -336,13 +336,13 @@ build-ci: gen
 # executable bit on the way, which takes an .app bundle apart — the framework
 # inside it is symlinks. A dmg arrives as a single opaque file instead.
 dmg-ci: build-ci
-	rm -rf $(CI_DIR)/stage
-	mkdir -p $(CI_DIR)/stage
-	cp -R $(CI_APP) $(CI_DIR)/stage/
-	ln -s /Applications $(CI_DIR)/stage/Applications
+	rm -rf "$(CI_DIR)"/stage
+	mkdir -p "$(CI_DIR)"/stage
+	cp -R "$(CI_APP)" "$(CI_DIR)"/stage/
+	ln -s /Applications "$(CI_DIR)"/stage/Applications
 	for i in 1 2 3; do \
-		hdiutil create -volname "$(APP_NAME)" -srcfolder $(CI_DIR)/stage \
-			-ov -format UDZO $(CI_DMG) && break || sleep 2; \
+		hdiutil create -volname "$(APP_NAME)" -srcfolder "$(CI_DIR)"/stage \
+			-ov -format UDZO "$(CI_DMG)" && break || sleep 2; \
 	done
-	rm -rf $(CI_DIR)/stage
+	rm -rf "$(CI_DIR)"/stage
 	@echo "Unsigned disk image: $(CI_DMG)"

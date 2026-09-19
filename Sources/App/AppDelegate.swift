@@ -99,9 +99,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let fleet = NotchFleet(scope: preferences.notchScope, edge: preferences.notchEdge)
         self.notchFleet = fleet
 
-        // `CODENOTCH_DEMO=1` puts the design frame's three providers on screen
+        // `HALO_DEMO=1` (or `CODENOTCH_DEMO=1`) puts the design frame's three providers on screen
         // with its numbers, for screenshots and for eyeballing the layout.
-        if ProcessInfo.processInfo.environment["CODENOTCH_DEMO"] == "1" {
+        if ProcessInfo.processInfo.environment["HALO_DEMO"] == "1" || ProcessInfo.processInfo.environment["CODENOTCH_DEMO"] == "1" {
             fleet.setSnapshots(Fixtures.snapshots())
         } else {
             // DeepSeek's Platform usage page is a browser-session provider:
@@ -272,8 +272,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard let store, let fleet, let preferences else { return nil }
                     let snap = await MainActor.run {
                         PhoneLinkSnapshotBuilder.build(
-                            snapshots: DailyPace.apply(to: store.snapshots,
-                                                       enabled: preferences.claudeDailyPaceRing),
+                            snapshots: store.snapshots,
                             sessions: Array(fleet.sessions.values.flatMap { $0 }),
                             disconnected: store.disconnected,
                             order: preferences.providerOrder,
@@ -294,8 +293,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                     let snap = await MainActor.run {
                         PhoneLinkSnapshotBuilder.build(
-                            snapshots: DailyPace.apply(to: store.snapshots,
-                                                       enabled: preferences.claudeDailyPaceRing),
+                            snapshots: store.snapshots,
                             sessions: Array(fleet.sessions.values.flatMap { $0 }),
                             disconnected: store.disconnected,
                             order: preferences.providerOrder,
@@ -523,10 +521,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .sink { [weak fleet] in fleet?.apply(weeklyRing: $0) }
                 .store(in: &cancellables)
 
-            preferences.$showsMoveHandle
-                .receive(on: RunLoop.main)
-                .sink { [weak fleet] in fleet?.apply(showsMoveHandle: $0) }
-                .store(in: &cancellables)
                 
             preferences.$notchSurfaceStyle
                 .receive(on: RunLoop.main)
@@ -605,24 +599,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             self.limitWatcher = limitWatcher
 
-            // The daily-pace window is laid over the store's snapshots here,
-            // on the way out, rather than inside a provider: it is a reading
-            // of a preference as much as of the account, and the store keeps
-            // what the vendor said. Paired with the preference so flipping the
-            // toggle redraws at once, without a fetch.
+            // Only what the vendor reported reaches the notch: no derived or
+            // estimated windows are laid over the store's snapshots.
             store.$notchSnapshots
-                .combineLatest(preferences.$claudeDailyPaceRing)
                 .receive(on: RunLoop.main)
-                .sink { [weak fleet] snapshots, paced in
-                    fleet?.setSnapshots(DailyPace.apply(to: snapshots, enabled: paced))
+                .sink { [weak fleet] snapshots in
+                    fleet?.setSnapshots(snapshots)
                 }
                 .store(in: &cancellables)
 
             store.$snapshots
-                .combineLatest(preferences.$claudeDailyPaceRing)
                 .receive(on: RunLoop.main)
-                .sink { [weak statusItem] snapshots, paced in
-                    let snapshots = DailyPace.apply(to: snapshots, enabled: paced)
+                .sink { [weak statusItem] snapshots in
                     statusItem?.snapshots = snapshots
                     notifier.observe(snapshots)
                     resetWatcher.observe(snapshots)
@@ -775,7 +763,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         fleet.apply(watchLimit: preferences.watchLimit, criticalLimit: preferences.criticalLimit)
         fleet.apply(weeklyRing: preferences.weeklyRing)
         fleet.apply(weeklyRingDashed: preferences.weeklyRingDashed)
-        fleet.apply(showsMoveHandle: preferences.showsMoveHandle)
         fleet.apply(foldsForFullScreen: preferences.foldsForFullScreen)
         fleet.apply(surfaceStyle: preferences.notchSurfaceStyle)
         fleet.apply(deepSeekPricingEnabled: preferences.deepSeekPricingEnabled)

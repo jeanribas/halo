@@ -188,9 +188,12 @@ final class NotchViewModel: ObservableObject {
     @Published var weeklyRingDashed: Bool = false
     @Published var watchLimit: Double = 0.50
     @Published var criticalLimit: Double = 0.70
-    /// Whether the move handle is on the notch at all. Mirrored from Settings
-    /// like `weeklyRing`.
-    @Published var showsMoveHandle = true
+    /// Whether the settings orb hangs off the notch. Off: the notch is a
+    /// Dynamic Island, and settings are reached from the menu bar icon.
+    var showsSettingsOrb = false
+    /// Whether the move handle is on the notch at all. Off for the same
+    /// reason as the orb; the edge is chosen in Settings.
+    @Published var showsMoveHandle = false
     /// Mirrors the persisted Appearance choice so the separate notch window
     /// redraws immediately when Settings changes it.
     @Published var surfaceStyle: NotchSurfaceStyle = .glass
@@ -404,6 +407,7 @@ final class NotchViewModel: ObservableObject {
     /// reaching for, and — where it has parted company with it — the arc you
     /// can actually see.
     var orbHandlePoints: [CGPoint] {
+        guard showsSettingsOrb else { return [] }
         let button = CGPoint(x: orbAlong, y: orbInset)
         guard orbHugsCorner else { return [button] }
 
@@ -427,6 +431,9 @@ final class NotchViewModel: ObservableObject {
     /// the two takes in a great deal of ground that is near neither — which is
     /// why the button used to appear well before the pointer reached the arc.
     func isOnOrbHandle(along: CGFloat, across: CGFloat) -> Bool {
+        // The settings orb is no longer drawn: settings live in the menu bar
+        // item, and the notch itself only answers hovers on its rings.
+        guard showsSettingsOrb else { return false }
         let radius = NotchLayout.orbHotZone / 2
         return orbHandlePoints.contains {
             hypot(along - $0.x, across - $0.y) <= radius
@@ -640,13 +647,19 @@ final class NotchViewModel: ObservableObject {
     /// for it makes the notch itself grow.
     var notchLength: CGFloat {
         if isExpanded { return shapeLength }
-        return hardwareNotch?.width ?? NotchLayout.pillHeight
+        // Divided by the size choice: the whole shape is drawn at `sizeScale`,
+        // and at rest it has to land on the hardware exactly — a scaled-up
+        // notch would hang out from under the real one as a black lip, a
+        // scaled-down one would show wallpaper around the hole in the screen.
+        if let hardwareNotch { return hardwareNotch.width / sizeScale }
+        return NotchLayout.pillHeight
     }
 
     /// And across it.
     var notchDepth: CGFloat {
         if isExpanded { return contentInset + NotchLayout.bodyDepth(for: edge) }
-        return hardwareNotch?.height ?? NotchLayout.pillWidth
+        if let hardwareNotch { return hardwareNotch.height / sizeScale }
+        return NotchLayout.pillWidth
     }
 
     /// What the notch folds away to, whether or not it is open right now —
@@ -665,8 +678,12 @@ final class NotchViewModel: ObservableObject {
     /// against the centre of the screen, whose close, minimise and zoom
     /// buttons then opened the notch on approach and disappeared under it.
     /// Flush with the hardware, what wakes the notch is the notch.
-    var wakeLength: CGFloat { max(restingLength * sizeScale, wakeBand) }
-    var wakeDepth: CGFloat { restingDepth * sizeScale + wakeBand }
+    var wakeLength: CGFloat {
+        max(restingLength * (isFlushWithHardware ? 1 : sizeScale), wakeBand)
+    }
+    var wakeDepth: CGFloat {
+        restingDepth * (isFlushWithHardware ? 1 : sizeScale) + wakeBand
+    }
     private var wakeBand: CGFloat { isFlushWithHardware ? 0 : NotchLayout.pillHotZone }
 
     /// The drawn size of the notch body, in panel axes.

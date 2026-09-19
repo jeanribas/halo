@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 import ServiceManagement
@@ -123,12 +124,15 @@ final class Preferences: ObservableObject {
     /// Where the slider may go. Wider than the presets at both ends, but not
     /// unbounded: below about three quarters the percentage under each ring
     /// stops being readable, which is the one thing the notch exists for.
-    static let customScaleRange: ClosedRange<Double> = 0.75...1.5
+    static let customScaleRange: ClosedRange<Double> = 0.6...2.0
 
     /// What the notch is actually drawn at, whichever control is in charge.
     var notchScale: CGFloat {
         usesCustomNotchScale ? CGFloat(customNotchScale) : notchSize.scale
     }
+
+    /// The same figure as a slider value, whichever control set it.
+    var notchScaleValue: Double { Double(notchScale) }
 
     /// The display the notch stays on, or the original focus-following behaviour.
     ///
@@ -145,6 +149,11 @@ final class Preferences: ObservableObject {
                 defaults.set(id, forKey: Keys.display)
             }
         }
+    }
+
+    /// The identifier of a connected display with a hardware notch, if any.
+    private static func builtInNotchedDisplay() -> String? {
+        NSScreen.screens.first { $0.hardwareNotch != nil }?.displayIdentifier
     }
 
     /// Which displays get a notch when more than one is connected.
@@ -183,12 +192,6 @@ final class Preferences: ObservableObject {
 
     @Published var showUsagePace: Bool {
         didSet { defaults.set(showUsagePace, forKey: Self.showUsagePaceKey) }
-    }
-
-    /// Whether Claude's big ring shows the day's share of the weekly limit
-    /// instead of the session. See `DailyPace`.
-    @Published var claudeDailyPaceRing: Bool {
-        didSet { defaults.set(claudeDailyPaceRing, forKey: Keys.claudeDailyPaceRing) }
     }
 
     /// Whether Spark and code-review Codex windows appear in the hover card.
@@ -237,6 +240,7 @@ final class Preferences: ObservableObject {
     @Published var showsMoveHandle: Bool {
         didSet { defaults.set(showsMoveHandle, forKey: Keys.showsMoveHandle) }
     }
+
 
     /// The colour used for positive usage and active-work indicators.
     @Published var accentColor: AccentColorChoice {
@@ -429,7 +433,6 @@ final class Preferences: ObservableObject {
         // A new key, so there is nothing under the old app name to migrate.
         static let weeklyRing = "weeklyRing"
         static let weeklyRingDashed = "weeklyRingDashed"
-        static let claudeDailyPaceRing = "claudeDailyPaceRing"
         static let showsMoveHandle = "showsMoveHandle"
         static let notchSurfaceStyle = "notchSurfaceStyle"
         static let watchLimit = "watchLimit"
@@ -533,7 +536,7 @@ final class Preferences: ObservableObject {
     /// the notch's mode, the archived readings, all apparently lost. Copying
     /// the old domain across once is the difference between a rename and what
     /// looks like a reset.
-    private static let previousDomain = "com.vinz.usagenotch"
+    private static let previousDomain = "com.vinz.codenotch"
 
     static func migrateFromPreviousName(into defaults: UserDefaults = .standard,
                                         from domain: String = previousDomain) {
@@ -645,30 +648,35 @@ final class Preferences: ObservableObject {
         // findable one — a new user who cannot see the app anywhere has no way
         // to learn it is running.
         self.appPresence = defaults.string(forKey: Keys.presence)
-            .flatMap(AppPresence.init(rawValue:)) ?? .dock
+            .flatMap(AppPresence.init(rawValue:)) ?? .menuBar
         // The right edge is where the notch has always been, and it is the one
         // side of a Mac that no system chrome claims by default.
         self.notchEdge = defaults.string(forKey: Keys.edge)
-            .flatMap(NotchEdge.init(rawValue:)) ?? .right
+            .flatMap(NotchEdge.init(rawValue:)) ?? .top
         // Medium is the design frame at 1:1, so an install that predates this
         // choice keeps exactly the notch it already had.
         self.notchSize = defaults.string(forKey: Keys.size)
             .flatMap(NotchSize.init(rawValue:)) ?? .medium
         // Absent means never chosen, and the presets are what every earlier
         // version had — so the slider is opt-in rather than the default.
-        self.usesCustomNotchScale = defaults.bool(forKey: Keys.usesCustomSize)
+        // The slider is the only size control now, so it is in charge unless
+        // someone has explicitly stored otherwise; 87% is the size that sits
+        // best against a MacBook's own notch.
+        self.usesCustomNotchScale = defaults.object(forKey: Keys.usesCustomSize) as? Bool ?? true
         let stored = defaults.object(forKey: Keys.customSize) as? Double
         self.customNotchScale = stored.map {
             min(max($0, Self.customScaleRange.lowerBound), Self.customScaleRange.upperBound)
-        } ?? 1
+        } ?? 0.87
+        // Untouched, the notch belongs on the display that has a real one:
+        // following the active window sends it wandering to whichever external
+        // monitor has focus, where there is no hardware notch to grow out of.
         self.displayPreference = defaults.string(forKey: Keys.display)
-            .map(DisplayPreference.display) ?? .followActiveWindow
+            .map(DisplayPreference.display)
+            ?? Self.builtInNotchedDisplay().map(DisplayPreference.display)
+            ?? .followActiveWindow
         self.resetTimeFormat = defaults.string(forKey: Keys.resetTimeFormat)
             .flatMap(ResetTimeFormat.init(rawValue:)) ?? .automatic
         self.showUsagePace = defaults.bool(forKey: Self.showUsagePaceKey)
-        // Off by default: it swaps what Claude's ring means, and that is a
-        // choice for whoever budgets their week that way.
-        self.claudeDailyPaceRing = defaults.bool(forKey: Keys.claudeDailyPaceRing)
         self.showCodexExtraLimits = Self.storedShowCodexExtraLimits(defaults: defaults)
         self.deepSeekPricingEnabled = defaults.object(forKey: Keys.deepSeekPricingEnabled) as? Bool ?? true
         if let data = defaults.data(forKey: Keys.deepSeekPricingSchedule),
@@ -695,7 +703,7 @@ final class Preferences: ObservableObject {
             .flatMap(WeeklyRing.init(rawValue:)) ?? .off
         // On unless turned off: it is how the notch is carried to another edge,
         // and a control that is missing by default is one nobody finds.
-        self.showsMoveHandle = defaults.object(forKey: Keys.showsMoveHandle) as? Bool ?? true
+        self.showsMoveHandle = defaults.object(forKey: Keys.showsMoveHandle) as? Bool ?? false
         self.accentColor = defaults.string(forKey: Keys.accentColor)
             .flatMap(AccentColorChoice.init(rawValue:)) ?? .system
         self.notchSurfaceStyle = defaults.string(forKey: Keys.notchSurfaceStyle)
