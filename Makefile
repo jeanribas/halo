@@ -309,9 +309,8 @@ build-ci: gen
 		'</dict></plist>' > "$(CI_ENTITLEMENTS)"
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Release -derivedDataPath "$(CI_DERIVED)" \
-		CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="" \
-		CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES \
-		CODE_SIGN_ENTITLEMENTS="$(CI_ENTITLEMENTS)" \
+		CODE_SIGN_IDENTITY="" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" \
+		CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
 		build
 	@# Xcode adds `com.apple.security.get-task-allow` to any non-distribution
 	@# signature. It lets another process attach to and read the memory of an
@@ -323,6 +322,12 @@ build-ci: gen
 	@#
 	@# The outer bundle only: the framework beside it keeps the signature it
 	@# was built with, and re-sealing the app recomputes its hashes anyway.
+	@# Finder stamps `com.apple.provenance` on anything opened from a
+	@# folder it has touched, and codesign refuses a bundle carrying it.
+	xattr -cr "$(CI_APP)"
+	@# Unsigned out of xcodebuild (see above), so the nested Sparkle
+	@# framework and its XPC services are signed here first, then the app.
+	codesign --force --deep --sign - "$(CI_APP)"
 	codesign --force --options runtime --entitlements "$(CI_ENTITLEMENTS)" \
 		--sign - "$(CI_APP)"
 	@# Proof rather than assumption, because this is invisible until someone
@@ -336,13 +341,26 @@ build-ci: gen
 # executable bit on the way, which takes an .app bundle apart — the framework
 # inside it is symlinks. A dmg arrives as a single opaque file instead.
 dmg-ci: build-ci
-	rm -rf "$(CI_DIR)"/stage
+	rm -rf "$(CI_DIR)"/stage "$(CI_DMG)"
 	mkdir -p "$(CI_DIR)"/stage
 	cp -R "$(CI_APP)" "$(CI_DIR)"/stage/
-	ln -s /Applications "$(CI_DIR)"/stage/Applications
+	@# `create-dmg` (brew install create-dmg) lays the window out: the app on
+	@# the left, an Applications link on the right, the background with the
+	@# arrow between them, and Halo's own icon on both the volume and the
+	@# .dmg file itself. Retried because Finder occasionally refuses the
+	@# AppleScript layout step on a busy machine.
 	for i in 1 2 3; do \
-		hdiutil create -volname "$(APP_NAME)" -srcfolder "$(CI_DIR)"/stage \
-			-ov -format UDZO "$(CI_DMG)" && break || sleep 2; \
+		create-dmg \
+			--volname "$(APP_NAME)" \
+			--volicon docs/dmg/Halo.icns \
+			--background docs/dmg/background.png \
+			--window-pos 200 120 --window-size 660 400 \
+			--icon-size 112 \
+			--icon "$(APP_NAME).app" 180 200 \
+			--app-drop-link 480 200 \
+			--hide-extension "$(APP_NAME).app" \
+			--no-internet-enable \
+			"$(CI_DMG)" "$(CI_DIR)"/stage && break || sleep 3; \
 	done
 	rm -rf "$(CI_DIR)"/stage
 	@echo "Unsigned disk image: $(CI_DMG)"
