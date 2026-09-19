@@ -12,6 +12,8 @@ and whether an agent is still working, done, or waiting on you.
 ![Swift](https://img.shields.io/badge/swift-5-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+**English** · [Português](README.pt-BR.md) · [Español](README.es.md)
+
 </div>
 
 Halo is a fork of [Codenotch](https://github.com/vinzdg/codenotch) by Vinz,
@@ -29,7 +31,7 @@ rebuilt around three ideas:
 
 ## Install
 
-[![Download for macOS](https://img.shields.io/badge/Download-Halo.dmg-00ff88?style=for-the-badge&logo=apple&logoColor=white&labelColor=0d0d10)](../../releases/latest/download/Halo.dmg)
+[![Download for macOS](docs/design/download-macos.svg)](../../releases/latest/download/Halo.dmg)
 
 The button is the disk image itself. The asset is named `Halo.dmg` in every
 release, so that link always resolves to the newest one. Drag Halo to
