@@ -94,7 +94,7 @@ final class Updater: NSObject, ObservableObject, SPUUpdaterDelegate {
     /// Pure, so both endings can be tested without Sparkle.
     static func outcome(afterTimeoutFrom current: Outcome) -> Outcome {
         guard current == .checking else { return current }
-        return .failed(L10n.t("The update check didn't finish. Try again, or download the latest Codenotch from hivinz.com."))
+        return .failed(L10n.t("The update check didn't finish. Try again, or download the latest Halo from github.com/jeanribas/halo/releases."))
     }
 
     /// A cycle that ended without saying found or not found — the person

@@ -29,9 +29,12 @@ rebuilt around three ideas:
 
 ## Install
 
-Download `Halo.dmg` from the [latest release](../../releases/latest), drag
-Halo to Applications, then clear the quarantine flag once (the build is
-ad-hoc signed, not notarized):
+[![Download for macOS](https://img.shields.io/badge/Download-Halo.dmg-00ff88?style=for-the-badge&logo=apple&logoColor=white&labelColor=0d0d10)](../../releases/latest/download/Halo.dmg)
+
+The button is the disk image itself. The asset is named `Halo.dmg` in every
+release, so that link always resolves to the newest one. Drag Halo to
+Applications, then clear the quarantine flag once (the build is ad-hoc
+signed, not notarized):
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/Halo.app

@@ -27792,55 +27792,55 @@
         }
       }
     },
-    "The update check didn't finish. Try again, or download the latest Halo from hivinz.com.": {
+    "The update check didn't finish. Try again, or download the latest Halo from github.com/jeanribas/halo/releases.": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Suche nach Updates wurde nicht abgeschlossen. Versuche es erneut oder lade das neueste Halo von hivinz.com."
+            "value": "Die Suche nach Updates wurde nicht abgeschlossen. Versuche es erneut oder lade das neueste Halo von github.com/jeanribas/halo/releases."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La recherche de mises à jour ne s'est pas terminée. Réessayez, ou téléchargez la dernière version de Halo sur hivinz.com."
+            "value": "La recherche de mises à jour ne s'est pas terminée. Réessayez, ou téléchargez la dernière version de Halo sur github.com/jeanribas/halo/releases."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アップデートの確認が完了しませんでした。もう一度試すか、hivinz.com から最新の Halo をダウンロードしてください。"
+            "value": "アップデートの確認が完了しませんでした。もう一度試すか、github.com/jeanribas/halo/releases から最新の Halo をダウンロードしてください。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "A verificação de atualizações não terminou. Tente de novo ou baixe o Halo mais recente em hivinz.com."
+            "value": "A verificação de atualizações não terminou. Tente de novo ou baixe o Halo mais recente em github.com/jeanribas/halo/releases."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Проверка обновлений не завершилась. Попробуйте ещё раз или скачайте последнюю версию Halo с hivinz.com."
+            "value": "Проверка обновлений не завершилась. Попробуйте ещё раз или скачайте последнюю версию Halo с github.com/jeanribas/halo/releases."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Перевірка оновлень не завершилася. Спробуйте ще раз або завантажте останню версію Halo з hivinz.com."
+            "value": "Перевірка оновлень не завершилася. Спробуйте ще раз або завантажте останню версію Halo з github.com/jeanribas/halo/releases."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "更新检查未完成。请重试，或从 hivinz.com 下载最新的 Halo。"
+            "value": "更新检查未完成。请重试，或从 github.com/jeanribas/halo/releases 下载最新的 Halo。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "更新檢查未完成。請再試一次，或從 hivinz.com 下載最新的 Halo。"
+            "value": "更新檢查未完成。請再試一次，或從 github.com/jeanribas/halo/releases 下載最新的 Halo。"
           }
         }
       }
