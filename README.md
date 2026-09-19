@@ -14,6 +14,8 @@ and whether an agent is still working, done, or waiting on you.
 
 **English** · [Português](README.pt-BR.md) · [Español](README.es.md)
 
+![Halo open above the hardware notch, with the Claude report](docs/design/halo-hero.png)
+
 </div>
 
 Halo is a fork of [Codenotch](https://github.com/vinzdg/codenotch) by Vinz,

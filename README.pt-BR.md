@@ -15,6 +15,8 @@ por você.
 
 [English](README.md) · **Português** · [Español](README.es.md)
 
+![Halo open above the hardware notch, with the Claude report](docs/design/halo-hero.png)
+
 </div>
 
 Halo é um fork do [Codenotch](https://github.com/vinzdg/codenotch), do Vinz,

@@ -14,6 +14,8 @@ renueva, y si un agente sigue trabajando, terminó o está esperándote.
 
 [English](README.md) · [Português](README.pt-BR.md) · **Español**
 
+![Halo open above the hardware notch, with the Claude report](docs/design/halo-hero.png)
+
 </div>
 
 Halo es un fork de [Codenotch](https://github.com/vinzdg/codenotch), de Vinz,
